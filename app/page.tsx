@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Mail, Phone, MapPin, Send, Sparkles, Code, Calculator, Palette } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Sparkles, Code, Calculator, Palette, Loader2, Check } from "lucide-react";
 
 import AuroraBackground from "@/components/AuroraBackground";
 
@@ -10,6 +10,7 @@ export default function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -100,13 +101,17 @@ export default function Home() {
             });
 
             if (response.ok) {
+                setFormStatus('success');
+
                 // Check if redirect is needed
                 if (formData.service === 'Website and Brand Solution') {
-                    window.location.href = 'https://onboarding.aurorabusiness.ca/';
+                    setIsRedirecting(true);
+                    setTimeout(() => {
+                        window.location.href = 'https://onboarding.aurorabusiness.ca/';
+                    }, 5000);
                     return;
                 }
 
-                setFormStatus('success');
                 setFormData({
                     firstName: '',
                     lastName: '',
@@ -329,11 +334,11 @@ export default function Home() {
                         </p>
                     </div>
 
-                    <div className="grid lg:grid-cols-5 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
                         {/* Contact Info - Takes 2 columns */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-2 flex flex-col gap-8 w-full">
                             {/* Email Card */}
-                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 hover:scale-105 transition-all duration-300 glow-hover cursor-pointer">
+                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 md:hover:scale-105 transition-all duration-300 glow-hover cursor-pointer">
                                 <div className="flex items-start gap-4">
                                     <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-400/30">
                                         <Mail className="h-6 w-6 text-blue-400" />
@@ -352,7 +357,7 @@ export default function Home() {
                             </div>
 
                             {/* Location Card */}
-                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 hover:scale-105 transition-all duration-300 glow-hover">
+                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 md:hover:scale-105 transition-all duration-300 glow-hover">
                                 <div className="flex items-start gap-4">
                                     <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-400/30">
                                         <MapPin className="h-6 w-6 text-purple-400" />
@@ -382,7 +387,7 @@ export default function Home() {
                         </div>
 
                         {/* Contact Form - Takes 3 columns */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3 w-full">
                             <div className="glass-strong rounded-3xl p-4 sm:p-8 md:p-10">
                                 <h3 className="text-2xl font-bold text-white mb-2">Send us a message</h3>
                                 <p className="text-slate-400 mb-8">Fill out the form below and we'll get back to you shortly.</p>
@@ -500,20 +505,47 @@ export default function Home() {
                                     {/* Submit Button */}
                                     <button
                                         type="submit"
-                                        disabled={formStatus === 'sending'}
-                                        className="group w-full px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-lg hover:from-blue-600 hover:to-purple-700 transition-all glow-hover disabled:opacity-50 flex items-center justify-center gap-3 relative overflow-hidden"
+                                        disabled={formStatus === 'sending' || formStatus === 'success'}
+                                        className={`group w-full px-8 py-4 rounded-xl text-white font-bold text-lg transition-all glow-hover disabled:opacity-80 flex items-center justify-center gap-3 relative overflow-hidden ${formStatus === 'success'
+                                            ? 'bg-green-600 hover:bg-green-700'
+                                            : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                                            }`}
                                     >
-                                        <span className="relative z-10">
-                                            {formStatus === 'sending' ? 'Sending...' : formStatus === 'success' ? 'Message Sent!' : 'Send Message'}
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {formStatus === 'sending' ? (
+                                                <>
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    Sending...
+                                                </>
+                                            ) : formStatus === 'success' ? (
+                                                <>
+                                                    <Check className="h-5 w-5" />
+                                                    Message Sent!
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Send Message
+                                                    <Send className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                                </>
+                                            )}
                                         </span>
-                                        <Send className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-                                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        {formStatus !== 'success' && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        )}
                                     </button>
 
                                     {/* Status Messages */}
                                     {formStatus === 'success' && (
                                         <div className="p-4 rounded-xl bg-green-500/20 border border-green-500/30 text-green-200 text-center animate-fade-in">
-                                            Thank you! Your message has been sent successfully. We'll be in touch soon.
+                                            {isRedirecting ? (
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <p className="font-semibold">Thank you for choosing Aurora!</p>
+                                                    <p className="text-sm opacity-90">Redirecting you to our onboarding portal in 5 seconds...</p>
+                                                    <Loader2 className="h-4 w-4 animate-spin mt-2" />
+                                                </div>
+                                            ) : (
+                                                "Thank you! Your message has been sent successfully. We'll be in touch soon."
+                                            )}
                                         </div>
                                     )}
                                     {formStatus === 'error' && (
