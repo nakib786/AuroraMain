@@ -89,9 +89,6 @@ export default function Home() {
             const form = e.currentTarget;
             const formDataToSend = new FormData(form);
 
-            // Add Turnstile token to form data
-            formDataToSend.append('cf-turnstile-response', turnstileToken);
-
             // Submit to FormSubmit.co
             const response = await fetch('https://formsubmit.co/n@aurorabusiness.ca', {
                 method: 'POST',
@@ -329,7 +326,7 @@ export default function Home() {
                         {/* Contact Info - Takes 2 columns */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Email Card */}
-                            <div className="group glass-strong rounded-2xl p-6 hover:scale-105 transition-all duration-300 glow-hover cursor-pointer">
+                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 hover:scale-105 transition-all duration-300 glow-hover cursor-pointer">
                                 <div className="flex items-start gap-4">
                                     <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-400/30">
                                         <Mail className="h-6 w-6 text-blue-400" />
@@ -348,7 +345,7 @@ export default function Home() {
                             </div>
 
                             {/* Location Card */}
-                            <div className="group glass-strong rounded-2xl p-6 hover:scale-105 transition-all duration-300 glow-hover">
+                            <div className="group glass-strong rounded-2xl p-5 sm:p-6 hover:scale-105 transition-all duration-300 glow-hover">
                                 <div className="flex items-start gap-4">
                                     <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-400/30">
                                         <MapPin className="h-6 w-6 text-purple-400" />
@@ -363,7 +360,7 @@ export default function Home() {
                             </div>
 
                             {/* Quick Stats */}
-                            <div className="glass-strong rounded-2xl p-6">
+                            <div className="glass-strong rounded-2xl p-5 sm:p-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="text-center">
                                         <div className="text-3xl font-bold gradient-text mb-1">24h</div>
@@ -379,7 +376,7 @@ export default function Home() {
 
                         {/* Contact Form - Takes 3 columns */}
                         <div className="lg:col-span-3">
-                            <div className="glass-strong rounded-3xl p-8 md:p-10">
+                            <div className="glass-strong rounded-3xl p-4 sm:p-8 md:p-10">
                                 <h3 className="text-2xl font-bold text-white mb-2">Send us a message</h3>
                                 <p className="text-slate-400 mb-8">Fill out the form below and we'll get back to you shortly.</p>
 
@@ -491,7 +488,7 @@ export default function Home() {
                                     </div>
 
                                     {/* Turnstile Widget */}
-                                    <div id="turnstile-widget" className="min-h-[65px]"></div>
+                                    <div id="turnstile-widget" className="min-h-[65px] flex justify-center"></div>
 
                                     {/* Submit Button */}
                                     <button
