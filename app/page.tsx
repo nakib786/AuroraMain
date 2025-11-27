@@ -11,6 +11,7 @@ export default function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
+    const [turnstileSize, setTurnstileSize] = useState<'normal' | 'compact'>('normal');
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
@@ -43,48 +44,48 @@ export default function Home() {
       return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+        // Resize listener to switch Turnstile size between normal and compact
+        useEffect(() => {
+            const updateSize = () => {
+                setTurnstileSize(window.innerWidth < 768 ? 'compact' : 'normal');
+            };
+            updateSize();
+            window.addEventListener('resize', updateSize);
+            return () => window.removeEventListener('resize', updateSize);
+        }, []);
+
     const handleScrambleComplete = () => {
       setTriggerScramble(false);
       setCurrentWordIndex((prev) => (prev + 1) % words.length);
-    };    // Initialize Turnstile when component mounts
+    }; // Initialize Turnstile when component mounts
     useEffect(() => {
-        // Wait for Turnstile to be available
         const initTurnstile = () => {
             if (typeof window !== 'undefined' && (window as any).turnstile) {
+                // Destroy existing widget if it exists
+                if (turnstileWidgetId) {
+                    (window as any).turnstile.remove(turnstileWidgetId);
+                    setTurnstileWidgetId(null);
+                    setTurnstileToken(null);
+                }
                 const widgetId = (window as any).turnstile.render('#turnstile-widget', {
                     sitekey: '0x4AAAAAACDMAU3eJpox8G4G',
                     theme: 'dark',
-                    size: 'compact',
-                    callback: (token: string) => {
-                        setTurnstileToken(token);
-                    },
-                    'error-callback': () => {
-                        setTurnstileToken(null);
-                    },
-                    'expired-callback': () => {
-                        setTurnstileToken(null);
-                    },
+                    size: turnstileSize,
+                    callback: (token: string) => setTurnstileToken(token),
+                    'error-callback': () => setTurnstileToken(null),
+                    'expired-callback': () => setTurnstileToken(null),
                 });
                 setTurnstileWidgetId(widgetId);
             }
         };
-
-        // Check if Turnstile is already loaded
-        if ((window as any).turnstile) {
-            initTurnstile();
-        } else {
-            // Wait for Turnstile script to load
-            const checkTurnstile = setInterval(() => {
-                if ((window as any).turnstile) {
-                    clearInterval(checkTurnstile);
-                    initTurnstile();
-                }
-            }, 100);
-
-            return () => clearInterval(checkTurnstile);
-        }
-    }, []);
-
+        const checkTurnstile = setInterval(() => {
+            if ((window as any).turnstile) {
+                clearInterval(checkTurnstile);
+                initTurnstile();
+            }
+        }, 100);
+        return () => clearInterval(checkTurnstile);
+    }, [turnstileSize]);
     // Cycle words with scramble animation every 3 seconds
     useEffect(() => {
       const interval = setInterval(() => {

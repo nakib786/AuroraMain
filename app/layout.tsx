@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -30,7 +31,26 @@ export default function RootLayout({
                 <link rel="preconnect" href="https://challenges.cloudflare.com" />
                 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
             </head>
-            <body className={outfit.className}>{children}</body>
+            <body className={outfit.className}>
+                {children}
+                <Script
+                    id="tawk-widget"
+                    strategy="beforeInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+                            (function(){
+                            var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+                            s1.async=true;
+                            s1.src='https://embed.tawk.to/67ffeda8d825181910e0cd9c/1ip12mtt0';
+                            s1.charset='UTF-8';
+                            s1.setAttribute('crossorigin','*');
+                            s0.parentNode.insertBefore(s1,s0);
+                            })();
+                        `,
+                    }}
+                />
+            </body>
         </html>
     );
 }
