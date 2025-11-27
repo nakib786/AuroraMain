@@ -88,6 +88,7 @@ export default function Home() {
         try {
             const form = e.currentTarget;
             const formDataToSend = new FormData(form);
+            formDataToSend.delete('cf-turnstile-response');
 
             // Submit to FormSubmit.co
             const response = await fetch('https://formsubmit.co/n@aurorabusiness.ca', {
@@ -99,6 +100,12 @@ export default function Home() {
             });
 
             if (response.ok) {
+                // Check if redirect is needed
+                if (formData.service === 'Website and Brand Solution') {
+                    window.location.href = 'https://onboarding.aurorabusiness.ca/';
+                    return;
+                }
+
                 setFormStatus('success');
                 setFormData({
                     firstName: '',
