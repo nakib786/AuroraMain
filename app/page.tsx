@@ -54,6 +54,7 @@ export default function Home() {
                 const widgetId = (window as any).turnstile.render('#turnstile-widget', {
                     sitekey: '0x4AAAAAACDMAU3eJpox8G4G',
                     theme: 'dark',
+                    size: 'compact',
                     callback: (token: string) => {
                         setTurnstileToken(token);
                     },
@@ -538,7 +539,7 @@ export default function Home() {
                                     </div>
 
                                     {/* Turnstile Widget */}
-                                    <div id="turnstile-widget" className="min-h-[65px] flex justify-center"></div>
+                                    <div id="turnstile-widget" className="min-h-[65px] w-full flex items-center justify-center"></div>
 
                                     {/* Submit Button */}
                                     <button
