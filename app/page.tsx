@@ -8,15 +8,15 @@ import AuroraBackground from "@/components/AuroraBackground";
 
 export default function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
         email: '',
         companyName: '',
         question: '',
-        service: '',
-        newsletter: false,
-        consent: false
+        service: ''
     });
     const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
@@ -28,11 +28,56 @@ export default function Home() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Initialize Turnstile when component mounts
+    useEffect(() => {
+        // Wait for Turnstile to be available
+        const initTurnstile = () => {
+            if (typeof window !== 'undefined' && (window as any).turnstile) {
+                const widgetId = (window as any).turnstile.render('#turnstile-widget', {
+                    sitekey: '0x4AAAAAACDMAU3eJpox8G4G',
+                    theme: 'dark',
+                    callback: (token: string) => {
+                        setTurnstileToken(token);
+                    },
+                    'error-callback': () => {
+                        setTurnstileToken(null);
+                    },
+                    'expired-callback': () => {
+                        setTurnstileToken(null);
+                    },
+                });
+                setTurnstileWidgetId(widgetId);
+            }
+        };
+
+        // Check if Turnstile is already loaded
+        if ((window as any).turnstile) {
+            initTurnstile();
+        } else {
+            // Wait for Turnstile script to load
+            const checkTurnstile = setInterval(() => {
+                if ((window as any).turnstile) {
+                    clearInterval(checkTurnstile);
+                    initTurnstile();
+                }
+            }, 100);
+
+            return () => clearInterval(checkTurnstile);
+        }
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         // Validate required fields
-        if (!formData.firstName || !formData.email || !formData.consent) {
+        if (!formData.firstName || !formData.email) {
+            setFormStatus('error');
+            setTimeout(() => setFormStatus('idle'), 3000);
+            return;
+        }
+
+        // Validate Turnstile token
+        if (!turnstileToken) {
             setFormStatus('error');
             setTimeout(() => setFormStatus('idle'), 3000);
             return;
@@ -43,6 +88,9 @@ export default function Home() {
         try {
             const form = e.currentTarget;
             const formDataToSend = new FormData(form);
+
+            // Add Turnstile token to form data
+            formDataToSend.append('cf-turnstile-response', turnstileToken);
 
             // Submit to FormSubmit.co
             const response = await fetch('https://formsubmit.co/n@aurorabusiness.ca', {
@@ -61,10 +109,15 @@ export default function Home() {
                     email: '',
                     companyName: '',
                     question: '',
-                    service: '',
-                    newsletter: false,
-                    consent: false
+                    service: ''
                 });
+
+                // Reset Turnstile widget
+                if (turnstileWidgetId !== null && (window as any).turnstile) {
+                    (window as any).turnstile.reset(turnstileWidgetId);
+                }
+                setTurnstileToken(null);
+
                 setTimeout(() => setFormStatus('idle'), 5000);
             } else {
                 setFormStatus('error');
@@ -405,70 +458,40 @@ export default function Home() {
                                     {/* Service Selection */}
                                     <div>
                                         <label htmlFor="service" className="block text-sm font-semibold text-slate-300 mb-3">
-                                            Choose Services
+                                            I'm interested in...
                                         </label>
                                         <select
                                             id="service"
                                             name="service"
                                             value={formData.service}
                                             onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                                            className="w-full px-5 py-4 rounded-xl glass border border-white/10 text-white bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+                                            className="w-full px-5 py-4 rounded-xl glass border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-900/50"
                                         >
-                                            <option value="" className="bg-slate-900">Select a service...</option>
+                                            <option value="" disabled className="bg-slate-900 text-slate-500">Select a service</option>
                                             <option value="Website and Brand Solution" className="bg-slate-900">Website and Brand Solution</option>
                                             <option value="Accounting and Tax Solutions" className="bg-slate-900">Accounting and Tax Solutions</option>
                                             <option value="Other" className="bg-slate-900">Other</option>
                                         </select>
                                     </div>
 
-                                    {/* Question/Message */}
+                                    {/* Question */}
                                     <div>
                                         <label htmlFor="question" className="block text-sm font-semibold text-slate-300 mb-3">
-                                            Question?
+                                            Your Question
                                         </label>
                                         <textarea
                                             id="question"
                                             name="question"
+                                            rows={4}
                                             value={formData.question}
                                             onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                                            rows={6}
-                                            className="w-full px-5 py-4 rounded-xl glass border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-                                            placeholder="Tell us about your project, goals, and how we can help you succeed..."
-                                        />
+                                            className="w-full px-5 py-4 rounded-xl glass border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                                            placeholder="How can we help you?"
+                                        ></textarea>
                                     </div>
 
-                                    {/* Newsletter Signup */}
-                                    <div className="flex items-start gap-3 p-4 rounded-xl glass border border-white/10">
-                                        <input
-                                            type="checkbox"
-                                            id="newsletter"
-                                            name="newsletter"
-                                            checked={formData.newsletter}
-                                            onChange={(e) => setFormData({ ...formData, newsletter: e.target.checked })}
-                                            className="mt-1 h-5 w-5 rounded border-white/20 bg-slate-900/50 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
-                                        />
-                                        <label htmlFor="newsletter" className="text-sm text-slate-300 cursor-pointer flex-1">
-                                            <span className="font-semibold text-white">Subscribe to our newsletter</span>
-                                            <br />
-                                            <span className="text-slate-400">Stay updated with the latest tips, trends, and exclusive offers for your business.</span>
-                                        </label>
-                                    </div>
-
-                                    {/* Consent Checkbox */}
-                                    <div className="flex items-start gap-3">
-                                        <input
-                                            type="checkbox"
-                                            id="consent"
-                                            name="consent"
-                                            required
-                                            checked={formData.consent}
-                                            onChange={(e) => setFormData({ ...formData, consent: e.target.checked })}
-                                            className="mt-1 h-5 w-5 rounded border-white/20 bg-slate-900/50 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
-                                        />
-                                        <label htmlFor="consent" className="text-sm text-slate-300 cursor-pointer">
-                                            I agree to receive communications from Aurora N&N Business Solution Inc. and understand that I can unsubscribe at any time. *
-                                        </label>
-                                    </div>
+                                    {/* Turnstile Widget */}
+                                    <div id="turnstile-widget" className="min-h-[65px]"></div>
 
                                     {/* Submit Button */}
                                     <button
@@ -483,17 +506,15 @@ export default function Home() {
                                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     </button>
 
-                                    {/* Success Message */}
+                                    {/* Status Messages */}
                                     {formStatus === 'success' && (
-                                        <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-center">
-                                            ✓ Thank you! We'll be in touch soon.
+                                        <div className="p-4 rounded-xl bg-green-500/20 border border-green-500/30 text-green-200 text-center animate-fade-in">
+                                            Thank you! Your message has been sent successfully. We'll be in touch soon.
                                         </div>
                                     )}
-
-                                    {/* Error Message */}
                                     {formStatus === 'error' && (
-                                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-center">
-                                            ⚠ Please fill in all required fields and accept the consent checkbox.
+                                        <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-center animate-fade-in">
+                                            {turnstileToken ? "Something went wrong. Please try again later." : "Please complete the security check."}
                                         </div>
                                     )}
                                 </form>

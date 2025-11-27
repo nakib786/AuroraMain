@@ -26,6 +26,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+            <head>
+                <link rel="preconnect" href="https://challenges.cloudflare.com" />
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+            </head>
             <body className={outfit.className}>{children}</body>
         </html>
     );
