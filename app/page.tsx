@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Mail, Phone, MapPin, Send, Sparkles, Code, Calculator, Palette, Loader2, Check } from "lucide-react";
+import { ArrowUp, Mail, Phone, MapPin, Send, Sparkles, Code, Calculator, Palette, Loader2, Check } from "lucide-react";
+import { TextScramble } from "@/components/ui/text-scramble";
 
 import AuroraBackground from "@/components/AuroraBackground";
 
@@ -21,15 +22,31 @@ export default function Home() {
     });
     const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
+    const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+    const [scrollProgress, setScrollProgress] = useState(0);
+
+    const words = ['Empowering', 'Transforming', 'Elevating', 'Growing', 'Scaling'];
+    const [currentWordIndex, setCurrentWordIndex] = useState(0);
+    const [triggerScramble, setTriggerScramble] = useState(false);
+
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+      const handleScroll = () => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = Math.round((scrollTop / docHeight) * 100);
+        setScrollProgress(scrolled);
+        setIsScrolled(scrollTop > 50);
+        setShowScrollBtn(scrollTop > 400);
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Initialize Turnstile when component mounts
+    const handleScrambleComplete = () => {
+      setTriggerScramble(false);
+      setCurrentWordIndex((prev) => (prev + 1) % words.length);
+    };    // Initialize Turnstile when component mounts
     useEffect(() => {
         // Wait for Turnstile to be available
         const initTurnstile = () => {
@@ -65,6 +82,14 @@ export default function Home() {
 
             return () => clearInterval(checkTurnstile);
         }
+    }, []);
+
+    // Cycle words with scramble animation every 3 seconds
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setTriggerScramble(true);
+      }, 3000);
+      return () => clearInterval(interval);
     }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -160,6 +185,10 @@ export default function Home() {
         }
     ];
 
+    const radius = 26;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference * (scrollProgress / 100);
+
     return (
         <main className="min-h-screen overflow-x-hidden relative z-10">
             <AuroraBackground speed={0.2} />
@@ -206,7 +235,7 @@ export default function Home() {
 
                 <div className="container mx-auto text-center relative z-10 fade-in">
                     <div className="mb-8 flex justify-center float">
-                        <div className="relative">
+                        <div className="relative translate-x-4 md:translate-x-0">
                             <div className="absolute inset-0 blur-3xl bg-blue-500/30 rounded-full"></div>
                             <Image
                                 src="/AuroraLogo.svg"
@@ -219,7 +248,16 @@ export default function Home() {
                         </div>
                     </div>
                     <h1 className="mb-6 text-5xl font-bold md:text-7xl lg:text-8xl">
-                        <span className="gradient-text">Empowering</span>
+                          <TextScramble 
+                          as="span" 
+                          className="gradient-text" 
+                          trigger={triggerScramble}
+                          onScrambleComplete={handleScrambleComplete}
+                          duration={1.2}
+                          speed={0.06}
+                        >
+                          {words[currentWordIndex]}
+                        </TextScramble>
                         <br />
                         <span className="text-white">Small Businesses</span>
                     </h1>
@@ -246,7 +284,7 @@ export default function Home() {
                 </div>
 
                 {/* Scroll Indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+                <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 animate-bounce">
                     <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
                         <div className="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
                     </div>
@@ -602,6 +640,42 @@ export default function Home() {
                     </div>
                 </div>
             </footer>
+            {showScrollBtn && (
+          <div className="fixed bottom-8 left-8 z-50 w-14 h-14">
+            <svg
+              className="w-full h-full transform -rotate-90 origin-center transition-all duration-500"
+              viewBox="0 0 60 60"
+            >
+              <defs>
+                <linearGradient id="progressRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="50%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
+              <circle
+                cx="30"
+                cy="30"
+                r="26"
+                fill="none"
+                stroke="url(#progressRing)"
+                strokeWidth="4"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                pathLength="1"
+                className="transition-all duration-500"
+              />
+            </svg>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="absolute inset-0 flex items-center justify-center glass-strong rounded-full shadow-2xl border border-transparent hover:bg-white/10 hover:scale-110 active:scale-95 transition-all duration-300 glow-hover aurora-glow bg-black/30 backdrop-blur-xl text-white"
+              aria-label="Scroll to top"
+            >
+              <ArrowUp className="h-6 w-6" />
+            </button>
+          </div>
+        )}
         </main>
     );
 }
